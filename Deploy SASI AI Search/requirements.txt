@@ -1,0 +1,9 @@
+flask
+google-generativeai
+flask-dance
+google-auth
+markdown
+gunicorn
+flask
+flask-dance
+google-generativeai
