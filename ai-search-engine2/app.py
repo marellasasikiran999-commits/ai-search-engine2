@@ -1,93 +1,91 @@
+from flask import Flask, request
 import os
-print("APP FILE:", __file__)
-print("CWD:", os.getcwd())
-
-
-from flask import Flask, render_template, request, redirect, url_for
-import os
-import sqlite3
-
-# ------------------ CONFIG ------------------
+from google import genai
 
 app = Flask(__name__)
 
-# Gemini API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Database file
-DB_NAME = "users.db"
-
-# ------------------ DATABASE ------------------
-
-def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS searches (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            query TEXT,
-            result TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-init_db()
-
-def save_search(query, result):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("INSERT INTO searches (query, result) VALUES (?, ?)",
-              (query, result))
-    conn.commit()
-    conn.close()
-
-def get_history():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT query, result FROM searches ORDER BY id DESC")
-    data = c.fetchall()
-    conn.close()
-    return data
-
-# ------------------ GEMINI SEARCH ------------------
-
-def ai_search(query):
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    # ✅ If API key is NOT set (Render), do not crash
-    if not api_key:
-        return f"You searched for: {query}"
-
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(query)
-    return response.text
-
-
-# ------------------ ROUTES ------------------
+# ✅ Create Gemini client ONCE
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route("/", methods=["GET", "POST"])
-def login():
+def home():
+    answer = ""
+
     if request.method == "POST":
-        return redirect(url_for("search"))
-    return render_template("login.html")
+        q = request.form.get("q")
 
-@app.route("/search", methods=["GET", "POST"])
-def search():
-    result = None
-    if request.method == "POST":
-        query = request.form.get("query")
-        result = ai_search(query)
-        save_search(query, result)
-    return render_template("search.html", result=result)
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=q
+            )
+            answer = response.text
+        except Exception as e:
+            answer = f"Gemini error: {e}"
 
-@app.route("/history")
-def history():
-    data = get_history()
-    return render_template("history.html", data=data)
-
-# ------------------ RUN ------------------
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>SASI AI Search</title>
+        <meta charset="utf-8">
+        <style>
+            body {{
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: linear-gradient(135deg,#667eea,#764ba2);
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .box {{
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                width: 420px;
+                text-align: center;
+                box-shadow: 0 20px 40px rgba(0,0,0,.2);
+            }}
+            input {{
+                width: 100%;
+                padding: 12px;
+                margin-top: 10px;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+            }}
+            button {{
+                width: 100%;
+                margin-top: 15px;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                background: #4f46e5;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+            }}
+            .answer {{
+                margin-top: 20px;
+                padding: 15px;
+                background: #f3f4f6;
+                border-radius: 8px;
+                text-align: left;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>🤖 SASI AI Search</h2>
+            <form method="POST">
+                <input name="q" placeholder="Ask anything..." required>
+                <button>Search</button>
+            </form>
+            {f"<div class='answer'><b>Answer:</b><br>{answer}</div>" if answer else ""}
+        </div>
+    </body>
+    </html>
+    """
 
 if __name__ == "__main__":
     app.run(debug=True)
