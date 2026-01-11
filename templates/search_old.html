@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<nav class="navbar navbar-dark bg-black px-4">
+  <div class="d-flex align-items-center">
+    <img src="{{ user['picture'] }}" class="rounded-circle me-2" width="40">
+    <strong>Hi {{ user['name'] }} 👋</strong>
+  </div>
+  <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+</nav>
+
+<div class="container text-center mt-5 fade-in">
+  <h1 class="mb-4">SASI AI SEARCH</h1>
+  <p class="text-muted">How can I help you today?</p>
+
+  <form method="POST" class="d-flex justify-content-center gap-2">
+    <input name="query" class="form-control w-50 search-box" placeholder="Ask anything...">
+    <button class="btn btn-success px-4">Search</button>
+  </form>
+
+  {% if answer %}
+  <div class="card bg-black text-light mt-4 p-4 answer-card">
+    {{ answer | safe }}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="app">
+  <aside class="sidebar">
+    <h3>SASI AI</h3>
+    {% for h in history %}
+      <div class="chat-item" onclick="loadChat({{h[0]}})">
+        {{ h[1][:30] }}...
+      </div>
+    {% endfor %}
+  </aside>
+
+  <main class="chat">
+    <header>
+      <img src="{{ user.picture }}">
+      <span>Hi {{ user.name }} 👋</span>
+      <a href="/logout">Logout</a>
+    </header>
+
+    <div id="messages"></div>
+
+    <footer>
+      <input id="q" placeholder="Ask anything...">
+      <button onclick="send()">Send</button>
+    </footer>
+  </main>
+</div>
+
+{% endblock %}
