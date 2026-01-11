@@ -6,7 +6,6 @@ print("CWD:", os.getcwd())
 from flask import Flask, render_template, request, redirect, url_for
 import os
 import sqlite3
-import google.generativeai as genai
 
 # ------------------ CONFIG ------------------
 
