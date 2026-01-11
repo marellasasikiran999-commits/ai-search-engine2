@@ -54,9 +54,17 @@ def get_history():
 # ------------------ GEMINI SEARCH ------------------
 
 def ai_search(query):
+    api_key = os.getenv("GEMINI_API_KEY")
+
+    # ✅ If API key is NOT set (Render), do not crash
+    if not api_key:
+        return f"You searched for: {query}"
+
+    genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-pro")
     response = model.generate_content(query)
     return response.text
+
 
 # ------------------ ROUTES ------------------
 
